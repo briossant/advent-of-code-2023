@@ -51,15 +51,20 @@ for conv_table in almanac:
             range_st = ranges[1]
             range_new_st = ranges[0]
             range_ed = ranges[1] + ranges[2]
-            if seed_ed > ranges[1] and seed_st < ranges[1] + ranges[2]:
-                new_seeds.append()  # add new seed st
-                new_seeds.append()  # add new seed len
-                # if new ed < seed_ed add to new seed to seeds
-                # update seed ed
-                # if seed_ed == seed_st return
-        #if seed_ed > seed_st add seed_st
+            if seed_ed > range_st and seed_st < range_ed:
+                new_seeds.append(range_new_st + max(seed_st, range_st) - range_st)  # add new seed st
+                new_seeds.append(min(range_ed, seed_ed) - max(seed_st, range_st))  # add new seed len
+                if range_ed < seed_ed: 
+                    seeds.append(range_ed)
+                    seeds.append(seed_ed-range_ed)
+                seed_ed = max(seed_st, range_st)
+                if seed_ed == seed_st:
+                    break
+        if seed_ed > seed_st:
+            new_seeds.append(seed_st)
+            new_seeds.append(seed_ed-seed_st)
     seeds = new_seeds
 
 
-
-print("min is :",str(min(seeds)))
+min_seeds = [seeds[i] for i in range(0,len(seeds),2)]
+print("min is :",str(min(min_seeds)))
