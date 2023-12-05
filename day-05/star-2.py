@@ -44,14 +44,20 @@ almanac = parseAlmanac(lines)
 
 for conv_table in almanac:
     new_seeds = []
-    for seed in seeds:
-        new_seeds.append(-1)
+    for si in range(0,len(seeds),2):
+        seed_st = seeds[si]
+        seed_ed = seeds[si] + seeds[si+1]
         for ranges in conv_table:
-            if seed >= ranges[1] and seed < ranges[1] + ranges[2]:
-                new_seeds[-1] = (ranges[0] + seed - ranges[1])
-                break
-        if new_seeds[-1] == -1:
-            new_seeds[-1] = seed
+            range_st = ranges[1]
+            range_new_st = ranges[0]
+            range_ed = ranges[1] + ranges[2]
+            if seed_ed > ranges[1] and seed_st < ranges[1] + ranges[2]:
+                new_seeds.append()  # add new seed st
+                new_seeds.append()  # add new seed len
+                # if new ed < seed_ed add to new seed to seeds
+                # update seed ed
+                # if seed_ed == seed_st return
+        #if seed_ed > seed_st add seed_st
     seeds = new_seeds
 
 
