@@ -1,4 +1,5 @@
 const fs = require('fs');
+const {lcm} = require('mathjs')
 
 if (process.argv.length < 3) {
     console.log("Usage: ", process.argv[0], process.argv[1], "<input file>")
@@ -29,20 +30,16 @@ lines
     });
 
 console.log(mapKeys)
-let dir_i = 0;
-let keysWithZ = 0;
-let steps = 0;
+const steps = mapKeys.map(() => 0);
 
-while (keysWithZ != mapKeys.length) {
-    keysWithZ = 0
-    for (let i = 0; i < mapKeys.length; ++i) {
+for (let i = 0; i < mapKeys.length; ++i) {
+    let dir_i = 0;
+    while (mapKeys[i][2] != "Z") {
         mapKeys[i] = map[mapKeys[i]][directions[dir_i]]
-        if (mapKeys[i][2] == "Z")
-            ++keysWithZ;
+        steps[i]++;
+        dir_i = ++dir_i % directions.length
     }
-    steps++;
-    dir_i = ++dir_i % directions.length
 }
 
-console.log("number of steps to find ZZZ: ", steps)
-
+console.log("find the PPCM of: ", steps);
+console.log("result:", steps.reduce((s, c) => lcm(s, c), 1));
