@@ -1,18 +1,17 @@
 const fs = require('fs');
 
-if (process.argv.length < 3) {
-    console.log("Usage: ", process.argv[0], process.argv[1], "<input file>")
+if (process.argv.length < 4) {
+    console.log("Usage: ", process.argv[0], process.argv[1], "<input file> <Starting shape>")
     process.exit(1)
 }
 
 const to_map = {
-    "|": [[0, 1], [0, -1]],
-    "-": [[1, 0], [-1, 0]],
-    "J": [[-1, 0], [0, -1]],
-    "L": [[1, 0], [0, -1]],
-    "F": [[0, 1], [1, 0]],
-    "7": [[0, 1], [-1, 0]],
-    "S": [[1, 0], [-1, 0], [0, 1], [0, -1]],
+    "|": [{x: 0, y: 1}, {x: 0, y: -1}],
+    "-": [{x: 1, y: 0}, {x: -1, y: 0}],
+    "J": [{x: -1, y: 0}, {x: 0, y: -1}],
+    "L": [{x: 1, y: 0}, {x: 0, y: -1}],
+    "F": [{x: 0, y: 1}, {x: 1, y: 0}],
+    "7": [{x: 0, y: 1}, {x: -1, y: 0}],
 }
 
 const lines = fs.readFileSync(process.argv[2])
@@ -26,9 +25,10 @@ const H = lines.length;
 
 
 let S = lines
-    .map((l, i) => [i, l.indexOf("S")])
-    .filter(e => e[1] != -1)[0];
-S.push("S")
+    .map((l, i) => {return {x: l.indexOf("S"), y: i}})
+    .filter(e => e.x != -1)[0];
+
+S.shape = process.argv[3];
 
 let i_curr = 0;
 let lvl = 0;
@@ -37,7 +37,7 @@ const queue = [];
 
 queue.push(S);
 queue.push(42)
-lines[S[0]][S[1]] = lvl++;
+lines[S.y][S.x] = lvl++;
 
 while (i_curr < queue.length) {
     S = queue[i_curr++];
@@ -48,14 +48,14 @@ while (i_curr < queue.length) {
         queue.push(42)
         continue
     }
-    to_map[S[2]].forEach(([x_off, y_off]) => {
-        const [y, x] = [S[0] + y_off, S[1] + x_off]
-        if (y < 0 || x < 0 || x >= W || y >= H)
+
+    to_map[S.shape].forEach((offset) => {
+        const new_coo = {x: S.x + offset.x, y: S.y + offset.y}
+        new_coo.shape = lines[new_coo.y][new_coo.x];
+        if (!Object.keys(to_map).includes(new_coo.shape))
             return;
-        if (!Object.keys(to_map).includes(lines[y][x]))
-            return;
-        queue.push([y, x, lines[y][x]])
-        lines[y][x] = "X";
+        queue.push(new_coo)
+        lines[new_coo.y][new_coo.x] = "X";
     });
 }
 
