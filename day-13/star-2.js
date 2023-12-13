@@ -10,12 +10,27 @@ if (process.argv.length < 3) {
     process.exit(1)
 }
 
+const hasOnlyOneDiff = (s1, s2) => {
+    let diff = false;
+    for (let i = 0; i < s1.length; ++i)
+        if (s1[i] !== s2[i]) {
+            if (diff)
+                return false;
+            diff = true;
+        }
+    return diff;
+}
+
 const checkIfMirror = (l, center) => {
+    let is_smudge_fix = false;
     for (let i = center - 1, j = center; i >= 0 && j < l.length; --i, ++j) {
-        if (l[i] !== l[j])
-            return false;
+        if (l[i] !== l[j]) {
+            if (is_smudge_fix || !hasOnlyOneDiff(l[i], l[j]))
+                return false;
+            is_smudge_fix = true;
+        }
     }
-    return true;
+    return is_smudge_fix;
 }
 
 const lines = fs.readFileSync(process.argv[2])
