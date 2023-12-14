@@ -1,69 +1,78 @@
 const fs = require('fs');
 
-Array.prototype.trans = function () {
-    return this[0].map((_, i) => this.map(x => x[i]));
-};
-
-Array.prototype.prettyForPrint = function () {
-    return this.map(x => x.join("")).join("\n");
-};
-
-Array.prototype.insert = function (index, ...items) {
-    this.splice(index, 0, ...items);
-};
-
-if (process.argv.length < 3) {
-    console.log("Usage: ", process.argv[0], process.argv[1], "<input file>")
+if (process.argv.length < 4) {
+    console.log("Usage: ", process.argv[0], process.argv[1], "<input file> <start index>")
     process.exit(1)
 }
 
-const expandMapCoo = (map) => {
-    const whereToInsert = [];
-    map.forEach((l, i) => {
-        if (l.every(x => x == '.'))
-            whereToInsert.push(i);
-    });
-    return whereToInsert;
+const rmSpring = (springs) => [springs[0].slice(1), ...springs.slice(1)];
+
+const decLength = (lengths) => [lengths[0] - 1, ...lengths.slice(1)];
+
+const nbrOfArrangements = (springs, lengths, isRemoving = false) => {
+    if (springs.length == 0)
+        return lengths.length == 0;
+    if (lengths.length == 0)
+        return springs.every(sp => !sp.some(c => c == "#"));
+
+    if (isRemoving && lengths[0] > springs[0].length)
+        return 0;
+
+    if (springs[0].length == 0) {
+        if (lengths[0] > 0) {
+            if (isRemoving)
+                return 0;
+            return nbrOfArrangements(springs.slice(1), lengths, false);
+        }
+        return nbrOfArrangements(springs.slice(1), lengths.slice(1), false);
+    }
+
+    if (springs[0][0] == "#") {
+        if (lengths[0] == 0)
+            return 0
+        return nbrOfArrangements(rmSpring(springs), decLength(lengths), true);
+    }
+
+    if (lengths[0] == 0)
+        return nbrOfArrangements(rmSpring(springs), lengths.slice(1), false);
+
+    if (isRemoving)
+        return nbrOfArrangements(rmSpring(springs), decLength(lengths), true);
+
+    return nbrOfArrangements(rmSpring(springs), decLength(lengths), true)
+        + nbrOfArrangements(rmSpring(springs), lengths, false);
 }
+
 
 const lines = fs.readFileSync(process.argv[2])
     .toString()
     .split("\n")
     .filter(l => l.length)
-    .map(l => l.split(""));
+    .map(l => l.split(" "));
 
-console.log(lines.prettyForPrint())
+const springs_groups = lines
+    .map(l => (l[0] + "?")
+        .repeat(5)
+        .slice(0, -1)
+        .split(".")
+        .filter(g => g.length)
+        .map(g => g.split(""))
+    );
 
-const coo = [];
-const cooCp = [];
-lines.forEach((l, y) =>
-    l.forEach((e, x) => {
-        if (e == "#") {
-            coo.push({x: x, y: y});
-            cooCp.push({x: x, y: y});
-        }
-    })
-);
+const groups_len = lines
+    .map(l => (l[1] + ",")
+        .repeat(5)
+        .slice(0, -1)
+        .split(",")
+        .map(len => parseInt(len))
+    );
 
-const expantionFactor = 1000000;
-expandMapCoo(lines).forEach(y => {
-    for (let i = 0; i < coo.length; i++)
-        if (cooCp[i].y >= y)
-            coo[i].y += expantionFactor - 1;
-});
+//console.log(springs_groups)
+//console.log(groups_len)
 
-expandMapCoo(lines.trans()).forEach(x => {
-    for (let i = 0; i < coo.length; i++)
-        if (cooCp[i].x >= x)
-            coo[i].x += expantionFactor - 1;
-});
-console.log(coo);
+res = 0
+for (let i = parseInt(process.argv[3]); i < springs_groups.length; ++i)
+    console.log(i, res += nbrOfArrangements(springs_groups[i], groups_len[i]))
 
-let dist_sum = 0;
-for (let i = 0; i < coo.length; i++)
-    for (let j = i + 1; j < coo.length; j++)
-        dist_sum += Math.abs(coo[j].x - coo[i].x) + coo[j].y - coo[i].y;
-
-
-console.log("total dist:", dist_sum);
+console.log("result:", res)
 
