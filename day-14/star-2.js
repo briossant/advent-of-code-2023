@@ -47,40 +47,34 @@ const roll = (line, rev) => {
 const countRocks = (lines) => {
     const len = lines[0].length;
     return lines
+        .trans()
         .map((l) => l
             .reduce((s, r, i) => s + (r == "O" ? len - i : 0), 0)
         )
         .sum();
 }
 
-//will modify lines
 const rollAll = (lines, rev = false) => lines.trans().map(line => roll(line, rev));
 
-const cycle = (lines) => {
+// don't modify lines
+const cycle = (lines, nbr) => {
     let i = 0;
-    while (i++ < 1000000000) {
-        console.log(lines.prettyForPrint(), "\n\n")
+    while (i++ < nbr) {
 
         // N
-        let nl = rollAll(lines);
+        lines = rollAll(lines);
 
         // W
-        nl = rollAll(nl);
+        lines = rollAll(lines);
 
         // S
-        nl = rollAll(nl, true);
+        lines = rollAll(lines, true);
 
         // E
-        nl = rollAll(nl, true);
-
-        if (nl.isTheSame(lines)) {
-            console.log("result:", countRocks(lines));
-            return;
-        }
-        lines = nl;
+        lines = rollAll(lines, true);
     }
 
-    console.log("result:", countRocks(lines));
+    return lines;
 }
 
 const lines = fs.readFileSync(process.argv[2])
@@ -94,6 +88,23 @@ const lines = fs.readFileSync(process.argv[2])
 
 // seems to enter a loop after a bit of time
 // idea: run for like a 1000 cycle and then search for the loop
-cycle(lines);
+const first_run_len = 1042;
+const total_runs = 1000000000;
+const memory = [cycle(lines, first_run_len)];
 
+memory.push(cycle(memory[memory.length - 1], 1));
+
+while (!memory[0].isTheSame(memory[memory.length - 1]))
+    memory.push(cycle(memory[memory.length - 1], 1));
+
+const loop_size = memory.length - 1;
+console.log("loop size: ", loop_size);
+
+const memory_rocks = memory.map(m => countRocks(m));
+console.log("memory rocks:", memory_rocks);
+
+const loop_index = (total_runs - first_run_len) % loop_size;
+console.log("loop index: ", loop_index);
+
+console.log("result:", countRocks(memory[loop_index]));
 
