@@ -1,7 +1,13 @@
-const fs = require('fs');
+import chalk from 'chalk';
+import fs from 'fs';
 
 Array.prototype.prettyForPrint = function () {
-    return this.map(x => x.join("")).join("\n");
+    return this
+        .map(x => x
+            .map(x => x == 0 ? chalk.bgGreen("#") : x)
+            .join("")
+        )
+        .join("\n");
 };
 
 if (process.argv.length < 3) {
@@ -25,7 +31,7 @@ const heat_map = fs.readFileSync(process.argv[2])
         .map(x => parseInt(x))
     );
 
-heat_map[0][0] = 0;
+const min_heat_map = heat_map.map(l => l.map(_ => Infinity));
 
 const W = heat_map[0].length;
 const H = heat_map.length;
@@ -36,13 +42,13 @@ class Point {
         this.y = y;
         this.heat = 0;
         this.last_dir = -1;
-        this.dir_count = 0;
-        this.copyMap(heat_map);
+        this.dir_count = 0; this.copyMap(heat_map);
     }
 
     copyMap(map) {
         this.heat_map = map
             .map(l => l.map(x => x));
+
     }
 
     copy() {
@@ -74,15 +80,9 @@ class Point {
         if (this.x < 0 || this.y < 0 || this.x >= W || this.y >= H)
             return true
 
-        // check heat_map
-        if (this.heat_map[this.y][this.x] == 0)
-            return true;
-
         // update heat
         this.heat += this.heat_map[this.y][this.x];
         this.heat_map[this.y][this.x] = 0;
-
-        //console.log(this.heat_map.prettyForPrint(), this.x, this.y, this.heat, "\n");
 
         return false;
     }
@@ -92,27 +92,30 @@ let min_heat = Infinity;
 const to_propagate = [new Point(0, 0)];
 const propagate = (p) => {
     if (p.heat >= min_heat - (H - p.x - 1) - (W - p.y - 1))
-        return //console.log(p.heat_map.prettyForPrint(), "\n\n");
+        return
     if (p.x == H - 1 && p.y == W - 1)
-        return console.log(min_heat = p.heat);
+        return console.log(min_heat = p.heat), console.log(p.heat_map.prettyForPrint(), "\n");
 
     let to_prop = undefined;
     for (let d = 0; d < dirs.length; ++d) {
         const np = p.copy();
-        if (!np.move(d)) {
+        if (!np.move(d) && np.heat <= min_heat_map[np.y][np.x]) {
+            min_heat_map[np.y][np.x] = np.heat;
+
             if (to_prop == undefined)
                 to_prop = np;
             else
                 to_propagate.push(np);
         }
     }
+
     if (to_prop != undefined)
         propagate(to_prop);
 }
 
 let i = 0;
 while (to_propagate.length > i) {
-    propagate(to_propagate[i++]);
-    console.log(min_heat)
+    propagate(to_propagate.shift());
 }
+
 console.log("result:", min_heat);
